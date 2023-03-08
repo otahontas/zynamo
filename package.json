@@ -14,10 +14,13 @@
     "zod": "^3.21.3"
   },
   "devDependencies": {
+    "@anatine/zod-mock": "^3.9.0",
+    "@faker-js/faker": "^7.6.0",
     "@mindlercare/eslint-config": "^1.5.1",
     "@tsconfig/node18-strictest": "^1.0.0",
     "eslint": "^8.35.0",
     "testcontainers": "^9.1.3",
+    "type-fest": "^3.6.1",
     "vitest": "^0.29.2"
   },
   "volta": {

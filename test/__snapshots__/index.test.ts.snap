@@ -1,0 +1,60 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`zynamo > with schema > putting data to table > fails with not valid input 1`] = `
+"[
+  {
+    \\"code\\": \\"invalid_type\\",
+    \\"expected\\": \\"string\\",
+    \\"received\\": \\"undefined\\",
+    \\"path\\": [
+      \\"foo\\"
+    ],
+    \\"message\\": \\"Required\\"
+  },
+  {
+    \\"code\\": \\"invalid_type\\",
+    \\"expected\\": \\"number\\",
+    \\"received\\": \\"undefined\\",
+    \\"path\\": [
+      \\"bar\\"
+    ],
+    \\"message\\": \\"Required\\"
+  },
+  {
+    \\"code\\": \\"invalid_type\\",
+    \\"expected\\": \\"boolean\\",
+    \\"received\\": \\"undefined\\",
+    \\"path\\": [
+      \\"foobar\\"
+    ],
+    \\"message\\": \\"Required\\"
+  },
+  {
+    \\"code\\": \\"invalid_type\\",
+    \\"expected\\": \\"string\\",
+    \\"received\\": \\"undefined\\",
+    \\"path\\": [
+      \\"foobarbazqux\\"
+    ],
+    \\"message\\": \\"Required\\"
+  },
+  {
+    \\"code\\": \\"invalid_type\\",
+    \\"expected\\": \\"array\\",
+    \\"received\\": \\"undefined\\",
+    \\"path\\": [
+      \\"foobaaars\\"
+    ],
+    \\"message\\": \\"Required\\"
+  },
+  {
+    \\"code\\": \\"invalid_type\\",
+    \\"expected\\": \\"map\\",
+    \\"received\\": \\"undefined\\",
+    \\"path\\": [
+      \\"fooBarMap\\"
+    ],
+    \\"message\\": \\"Required\\"
+  }
+]"
+`;
