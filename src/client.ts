@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   CreateTableCommand,
   CreateTableCommandOutput,
@@ -22,14 +21,14 @@ import type { Spread } from "type-fest";
 // TS doesn't allow classes to override static methods of base classes: hence
 // omitting "from" method her
 // https://github.com/microsoft/TypeScript/issues/4628#issuecomment-1147905253
-type DynamoDBDocumentClientConstructorParams = [
+type DynamoDBDocumentClientConstructorParameters = [
   client: DynamoDBClient,
   translateConfig?: TranslateConfig
 ];
 // @ts-expect-error DynamoDBDocumentClient constructor is protected, but needs to used
 // here to omit "from"
 const DynamoDBDocumentClientWithoutFrom: (new (
-  ...args: DynamoDBDocumentClientConstructorParams
+  ...arguments_: DynamoDBDocumentClientConstructorParameters
 ) => DynamoDBDocumentClient) &
   Omit<typeof DynamoDBDocumentClient, "from"> = DynamoDBDocumentClient;
 
@@ -65,9 +64,9 @@ export class ZynamoClient<
 
   protected constructor(
     schema: Schema,
-    ...superParams: DynamoDBDocumentClientConstructorParams
+    ...superParameters: DynamoDBDocumentClientConstructorParameters
   ) {
-    super(...superParams);
+    super(...superParameters);
     this.schema = schema;
   }
 
@@ -78,6 +77,8 @@ export class ZynamoClient<
       const parsed = this.schema.parse(result.Item);
       return {
         ...result,
+        // This gets inferred correctly
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         Item: parsed.data,
       };
     }
@@ -113,6 +114,8 @@ export class ZynamoClient<
     if (command instanceof PutCommand) {
       return this.handlePutCOmmand(command);
     }
+    // TODO: FIX
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
     return super.send(command as any, options) as any;
   }
 

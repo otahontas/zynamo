@@ -102,7 +102,7 @@ describe("zynamo", () => {
       await client.send(new DeleteTableCommand({ TableName: "LitSwagTable" }));
     });
 
-    describe("putting data to table", async () => {
+    describe("putting data to table", () => {
       const tableForPut = "FooTableToPut";
       beforeAll(async () => {
         await client.send(
@@ -137,8 +137,8 @@ describe("zynamo", () => {
         );
         expect(response.$metadata.httpStatusCode).toBe(200);
       });
-      it("fails with not valid input", async () => {
-        expect(
+      it("fails with not valid input", () => {
+        void expect(
           client.send(
             new PutCommand({
               TableName: tableForPut,
@@ -151,7 +151,7 @@ describe("zynamo", () => {
       });
     });
 
-    describe("getting data from table", async () => {
+    describe("getting data from table", () => {
       const tableForGet = "FooTableForGet";
       const fooValue = "1";
       let input: z.infer<typeof schema>;
