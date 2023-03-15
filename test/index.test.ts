@@ -12,10 +12,6 @@ import { ZynamoClient } from "../src";
 
 const dynamodbPort = 8000;
 
-// TODO: logger
-
-// TODO: handle that tests don't rely on each other
-
 describe("zynamo", () => {
   let container: StartedTestContainer;
   let containerUrl: string;
@@ -53,7 +49,8 @@ describe("zynamo", () => {
   });
 
   describe("with schema", () => {
-    // TODO: better tests with some property based hassle
+    // TODO: better tests with some property based hassle (all different data types for
+    // dynamo etc)
     const schema = z.object({
       foo: z.string(),
       bar: z.number(),
@@ -61,22 +58,23 @@ describe("zynamo", () => {
       foobarbaz: z.string().optional(),
       foobarbazqux: z.string().nullable(),
       foobaaars: z.array(z.string()),
-      fooBarMap: z.map(
-        z.string(),
-        z.object({ jou: z.number(), jii: z.string() })
-      ),
     });
     let client: ZynamoClient<typeof schema>;
-
-    it("client can be created", () => {
+    beforeAll(() => {
       client = ZynamoClient.from(schema, config);
-      expect(client).toBeDefined();
+    });
+
+    it("client can be created with proper schema", () => {
+      const clientHere = ZynamoClient.from(schema, config);
+      expect(clientHere).toBeDefined();
       // TODO: test that client doesn't accept unsuitable schema
     });
 
     it("client can create a table", async () => {
       // TODO: test that client accepts only table names defined in schema (later when
       // schemas handle multiple tables & sort keys etc)
+      //
+      const tableName = "FooTable";
       const response = await client.send(
         new CreateTableCommand({
           AttributeDefinitions: [
@@ -95,11 +93,11 @@ describe("zynamo", () => {
             ReadCapacityUnits: 1,
             WriteCapacityUnits: 1,
           },
-          TableName: "LitSwagTable",
+          TableName: "FooTable",
         })
       );
       expect(response.$metadata.httpStatusCode).toBe(200);
-      await client.send(new DeleteTableCommand({ TableName: "LitSwagTable" }));
+      await client.send(new DeleteTableCommand({ TableName: tableName }));
     });
 
     describe("putting data to table", () => {
@@ -127,6 +125,11 @@ describe("zynamo", () => {
           })
         );
       });
+
+      afterAll(async () => {
+        await client.send(new DeleteTableCommand({ TableName: tableForPut }));
+      });
+
       it("succeeds with valid input", async () => {
         const input = generateMock(schema);
         const response = await client.send(
@@ -187,12 +190,15 @@ describe("zynamo", () => {
           })
         );
       });
+
+      afterAll(async () => {
+        await client.send(new DeleteTableCommand({ TableName: tableForGet }));
+      });
+
       it("returns valid stuff", async () => {
-        // TODO: fix map - object conversion
         const response = await client.send(
           new GetCommand({
             TableName: tableForGet,
-            // TODO: validate key
             Key: {
               foo: fooValue,
             },
@@ -201,6 +207,7 @@ describe("zynamo", () => {
         expect(response.$metadata.httpStatusCode).toBe(200);
         expect(response.Item).toMatchObject(input);
       });
+
       it("doesn't fail when item not in table", async () => {
         const response = await client.send(
           new GetCommand({

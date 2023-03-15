@@ -74,12 +74,11 @@ export class ZynamoClient<
   async handleGetCommand(command: GetCommand) {
     const result = await super.send(command);
     if (result.Item) {
-      const parsed = this.schema.parse(result.Item);
       return {
         ...result,
         // This gets inferred correctly
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        Item: parsed.data,
+        Item: this.schema.parse(result.Item),
       };
     }
     return result;

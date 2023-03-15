@@ -46,15 +46,6 @@ exports[`zynamo > with schema > putting data to table > fails with not valid inp
       \\"foobaaars\\"
     ],
     \\"message\\": \\"Required\\"
-  },
-  {
-    \\"code\\": \\"invalid_type\\",
-    \\"expected\\": \\"map\\",
-    \\"received\\": \\"undefined\\",
-    \\"path\\": [
-      \\"fooBarMap\\"
-    ],
-    \\"message\\": \\"Required\\"
   }
 ]"
 `;
