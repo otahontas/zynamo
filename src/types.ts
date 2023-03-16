@@ -12,15 +12,15 @@ type ValidatePartitionKeyPart<
   PartitionKeyPart extends string,
   PartitionKey,
   ExpressionAttributevalues extends Record<string, any>
-> = PartitionKeyPart extends `${infer PartitionKeyName} = :${infer PartitionKeyVariableName}`
+> = PartitionKeyPart extends `${infer PartitionKeyName} = ${infer PartitionKeyVariableName}`
   ? // Check if partition key name is correct
     PartitionKeyName extends PartitionKey
     ? // Check if variable is name is in ExpressionAttributevalues
       PartitionKeyVariableName extends keyof ExpressionAttributevalues
       ? PartitionKeyPart
-      : ValidationError
-    : ValidationError
-  : ValidationError;
+      : "Partition key variable name must be in ExpressionAttributevalues"
+    : "Partition key name must be correct"
+  : "Invalid partition key part";
 
 type SortKeySeparator = "=" | "<" | "<=" | ">" | ">=";
 
@@ -31,8 +31,8 @@ type ValidateSortKeyPart<
 > =
   // Check if we have a sort key and one variable
   SortKeyPart extends
-    | `${infer SortKeyName} ${SortKeySeparator} :${infer SortKeyVariableName}`
-    | `begins_with ( ${infer SortKeyName}, :${infer SortKeyVariableName} )`
+    | `${infer SortKeyName} ${SortKeySeparator} ${infer SortKeyVariableName}`
+    | `begins_with (${infer SortKeyName}, ${infer SortKeyVariableName})`
     ? // Check if sort key name is correct
       SortKeyName extends SortKey
       ? // Check if sort key variable name is in ExpressionAttributevalues
@@ -41,7 +41,7 @@ type ValidateSortKeyPart<
         : ValidationError
       : ValidationError
     : // Check if we have a sort key and two variables
-    SortKeyPart extends `${infer SortKeyName} BETWEEN :${infer SortKeyVariableName1} AND :${infer SortKeyVariableName2}`
+    SortKeyPart extends `${infer SortKeyName} BETWEEN ${infer SortKeyVariableName1} AND ${infer SortKeyVariableName2}`
     ? // Check if sort key name is correct
       SortKeyName extends SortKey
       ? // Check if both sort variables names are in ExpressionAttributevalues
@@ -53,14 +53,14 @@ type ValidateSortKeyPart<
       : ValidationError
     : ValidationError;
 
-type ValidateKeyConditionExpression<
+export type ValidateKeyConditionExpression<
   Expression extends string,
   PartitionKey extends string,
   ExpressionAttributevalues extends Record<string, any>,
   SortKey extends string | undefined = undefined
 > =
   // Check if we have have both partition key and sort key
-  Expression extends `${infer PartitionKeyPart} "AND" ${infer SortKeyPart}`
+  Expression extends `${infer PartitionKeyPart} AND ${infer SortKeyPart}`
     ? SortKey extends string
       ? // Check if both partition key and sort key are correct TODO: how to report correct error, like that error was unsuitable sort key
         And<
@@ -101,15 +101,7 @@ type ValidateKeyConditionExpression<
       KeyConditionExpressSyntaxError<Expression>;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-type K = ValidateKeyConditionExpression<
-  "Season = :s AND Episode = :e",
-  "Season",
-  { ":e": 1; ":s": 1 },
-  "Episode"
->;
-
 type _goodCases = [
-  // Partition key and sort key
   Assert<
     Equals<
       ValidateKeyConditionExpression<
