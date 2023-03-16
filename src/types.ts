@@ -1,16 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Assert<T extends true> = T;
 type Equals<A, B> = A extends B ? (B extends A ? true : false) : false;
-type And<A, B> = A extends true ? (B extends true ? true : false) : false;
 
 // Typed Errors
-type ValidationError = "Not valid";
+type ParseErrorTag = "Parsing Error:";
+type CreateParseError<Content extends string> = `${ParseErrorTag} ${Content}`;
+
 type KeyConditionExpressSyntaxError<Expression extends string> =
   `${Expression} was not proper KeyConditionExpression`;
 
 type ValidatePartitionKeyPart<
   PartitionKeyPart extends string,
-  PartitionKey,
+  PartitionKey extends string,
   ExpressionAttributevalues extends Record<string, any>
 > = PartitionKeyPart extends `${infer PartitionKeyName} = ${infer PartitionKeyVariableName}`
   ? // Check if partition key name is correct
@@ -18,9 +19,9 @@ type ValidatePartitionKeyPart<
     ? // Check if variable is name is in ExpressionAttributevalues
       PartitionKeyVariableName extends keyof ExpressionAttributevalues
       ? PartitionKeyPart
-      : "Partition key variable name must be in ExpressionAttributevalues"
-    : "Partition key name must be correct"
-  : "Invalid partition key part";
+      : CreateParseError<`Partition key variable ${PartitionKeyVariableName} was not in ExpressionAttributevalues`>
+    : CreateParseError<`Partition key in expression should be ${PartitionKey}, but it was ${PartitionKeyName}`>
+  : CreateParseError<`Partition key part '${PartitionKeyPart}' of expression was not properly formatted`>;
 
 type SortKeySeparator = "=" | "<" | "<=" | ">" | ">=";
 
@@ -38,8 +39,8 @@ type ValidateSortKeyPart<
       ? // Check if sort key variable name is in ExpressionAttributevalues
         SortKeyVariableName extends keyof ExpressionAttributevalues
         ? SortKeyPart
-        : ValidationError
-      : ValidationError
+        : CreateParseError<`Sort key variable ${SortKeyVariableName} was not in ExpressionAttributevalues`>
+      : CreateParseError<`Sort key in expression should be ${SortKey}, but it was ${SortKeyName}`>
     : // Check if we have a sort key and two variables
     SortKeyPart extends `${infer SortKeyName} BETWEEN ${infer SortKeyVariableName1} AND ${infer SortKeyVariableName2}`
     ? // Check if sort key name is correct
@@ -48,10 +49,10 @@ type ValidateSortKeyPart<
         SortKeyVariableName1 extends keyof ExpressionAttributevalues
         ? SortKeyVariableName2 extends keyof ExpressionAttributevalues
           ? SortKeyPart
-          : ValidationError
-        : ValidationError
-      : ValidationError
-    : ValidationError;
+          : CreateParseError<`First sort key variable ${SortKeyVariableName1} was not in ExpressionAttributevalues`>
+        : CreateParseError<`Second sort key variable ${SortKeyVariableName2} was not in ExpressionAttributevalues`>
+      : CreateParseError<`Sort key in expression should be ${SortKey}, but it was ${SortKeyName}`>
+    : CreateParseError<`Sort key part '${SortKeyPart}' of expression was not properly formatted`>;
 
 export type ValidateKeyConditionExpression<
   Expression extends string,
@@ -62,29 +63,27 @@ export type ValidateKeyConditionExpression<
   // Check if we have have both partition key and sort key
   Expression extends `${infer PartitionKeyPart} AND ${infer SortKeyPart}`
     ? SortKey extends string
-      ? // Check if both partition key and sort key are correct TODO: how to report correct error, like that error was unsuitable sort key
-        And<
-          Equals<
-            ValidatePartitionKeyPart<
-              PartitionKeyPart,
-              PartitionKey,
-              ExpressionAttributevalues
-            >,
-            PartitionKeyPart
-          >,
-          Equals<
-            ValidateSortKeyPart<
+      ? // Check if both partition key and sort key are correct
+        ValidatePartitionKeyPart<
+          PartitionKeyPart,
+          PartitionKey,
+          ExpressionAttributevalues
+        > extends infer PartitionKeyValidationResult
+        ? PartitionKeyValidationResult extends `${ParseErrorTag}${string}`
+          ? // Not valid partition key, return error
+            PartitionKeyValidationResult
+          : ValidateSortKeyPart<
               SortKeyPart,
               SortKey,
               ExpressionAttributevalues
-            >,
-            SortKeyPart
-          >
-        > extends true
-        ? // Return the expression if valid
-          Expression
-        : // Return error if invalid
-          KeyConditionExpressSyntaxError<Expression>
+            > extends infer SortKeyValidationResult
+          ? SortKeyValidationResult extends `${ParseErrorTag}${string}`
+            ? // Not valid sort key, return error
+              SortKeyValidationResult
+            : // All okay, return expression
+              Expression
+          : never
+        : never
       : "Sort key parameter must be defined if expression contains sort key"
     : // Validate if expression is the partitionkey part
     Equals<
